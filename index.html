@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>開発記録 - 滝津県公式サイト</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>開発記録</h1>
+    <p class="note">無断での保存・転載を禁止します。</p>
+</header>
+
+<main>
+
+    <!-- 管理者ログイン -->
+    <section id="login-section">
+        <h2>管理者ログイン</h2>
+        <input type="password" id="admin-pass" placeholder="パスワードを入力">
+        <button onclick="login()">ログイン</button>
+        <p class="small">※ 管理者のみ投稿できます</p>
+    </section>
+
+    <!-- 投稿フォーム（管理者のみ表示） -->
+    <section id="post-section" class="hidden">
+        <h2>新規投稿</h2>
+        <input type="text" id="post-title" placeholder="タイトル">
+        <textarea id="post-text" placeholder="本文"></textarea>
+        <button onclick="addPost()">投稿する</button>
+    </section>
+
+    <!-- 写真追加フォーム -->
+    <section id="photo-section" class="hidden">
+        <h2>写真を追加</h2>
+        <select id="post-select"></select>
+        <input type="file" id="photo-file" accept="image/*">
+        <input type="date" id="photo-date">
+        <input type="text" id="photo-desc" placeholder="説明（任意）">
+        <button onclick="addPhoto()">写真を追加</button>
+    </section>
+
+    <hr>
+
+    <!-- 投稿一覧 -->
+    <section>
+        <h2>投稿一覧</h2>
+        <div id="post-list"></div>
+    </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
+
+body {
+    font-family: "Noto Sans JP", sans-serif;
+    background: #ffffff;
+    color: #000;
+    margin: 0;
+    padding: 20px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.note {
+    font-size: 12px;
+    color: #444;
+}
+
+section {
+    margin-top: 30px;
+}
+
+input, textarea, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+button {
+    cursor: pointer;
+    background: #e0e0e0;
+}
+
+.hidden {
+    display: none;
+}
+
+.post-box {
+    border: 1px solid #000;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.photo {
+    margin-top: 10px;
+}
+
+.photo img {
+    width: 100%;
+    max-width: 400px;
+    display: block;
+}
+
+.small {
+    font-size: 12px;
+}
+
+let posts = JSON.parse(localStorage.getItem("posts") || "[]");
+
+// 管理者パスワード（必要なら変更）
+const ADMIN_PASS = "takitsu2026";
+
+// ログイン処理
+function login() {
+    const pass = document.getElementById("admin-pass").value;
+    if (pass === ADMIN_PASS) {
+        document.getElementById("post-section").classList.remove("hidden");
+        document.getElementById("photo-section").classList.remove("hidden");
+        alert("ログイン成功");
+    } else {
+        alert("パスワードが違います");
+    }
+}
+
+// 投稿追加
+function addPost() {
+    const title = document.getElementById("post-title").value;
+    const text = document.getElementById("post-text").value;
+
+    const newPost = {
+        id: Date.now(),
+        title,
+        text,
+        date: new Date().toLocaleDateString(),
+        photos: []
+    };
+
+    posts.push(newPost);
+    save();
+    render();
+    updateSelect();
+}
+
+// 写真追加
+function addPhoto() {
+    const id = Number(document.getElementById("post-select").value);
+    const file = document.getElementById("photo-file").files[0];
+    const date = document.getElementById("photo-date").value;
+    const desc = document.getElementById("photo-desc").value;
+
+    if (!file) return alert("写真を選んでください");
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const post = posts.find(p => p.id === id);
+        post.photos.push({
+            src: e.target.result,
+            date,
+            desc
+        });
+        save();
+        render();
+    };
+    reader.readAsDataURL(file);
+}
+
+// 保存
+function save() {
+    localStorage.setItem("posts", JSON.stringify(posts));
+}
+
+// 投稿一覧表示
+function render() {
+    const list = document.getElementById("post-list");
+    list.innerHTML = "";
+
+    posts.slice().reverse().forEach(post => {
+        const box = document.createElement("div");
+        box.className = "post-box";
+
+        box.innerHTML = `
+            <h3>${post.title}</h3>
+            <p>${post.date}</p>
+            <p>${post.text}</p>
+        `;
+
+        post.photos.forEach(photo => {
+            const p = document.createElement("div");
+            p.className = "photo";
+            p.innerHTML = `
+                <img src="${photo.src}">
+                <p>撮影日：${photo.date}</p>
+                <p>${photo.desc}</p>
+            `;
+            box.appendChild(p);
+        });
+
+        list.appendChild(box);
+    });
+}
+
+// 投稿選択リスト更新
+function updateSelect() {
+    const select = document.getElementById("post-select");
+    select.innerHTML = "";
+    posts.forEach(post => {
+        const op = document.createElement("option");
+        op.value = post.id;
+        op.textContent = post.title;
+        select.appendChild(op);
+    });
+}
+
+render();
+updateSelect();
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>滝津県について</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>滝津県について</h1>
+</header>
+
+<main>
+
+<section class="intro-box">
+    <h2>概要</h2>
+    <p>
+        滝津県は、豊かな自然と落ち着いた街並みが調和した地域です。<br>
+        県内には滝や川が多く、四季を通して美しい景観を楽しむことができます。<br>
+        住みやすさと発展を両立させることを目指し、現在もさまざまな開発が進められています。
+    </p>
+</section>
+
+<section class="intro-box">
+    <h2>人口・面積</h2>
+    <p>
+        ・人口：およそ ○○万人<br>
+        ・面積：○○ km²<br>
+        ・県庁所在地：滝津市
+    </p>
+</section>
+
+<section class="intro-box">
+    <h2>主な特徴</h2>
+    <ul>
+        <li>自然豊かな環境</li>
+        <li>落ち着いた生活圏</li>
+        <li>観光資源としての滝・渓谷</li>
+        <li>開発が進む新しい街づくり</li>
+    </ul>
+</section>
+
+<section class="intro-box">
+    <h2>アクセス</h2>
+    <p>
+        ・主要駅：滝津駅<br>
+        ・空港：滝津空港（国内線）<br>
+        ・高速道路：滝津IC ほか
+    </p>
+</section>
+
+</main>
+
+</body>
+</html>
