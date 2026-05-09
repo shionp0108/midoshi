@@ -1,280 +1,305 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>開発記録 - 滝津県公式サイト</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<header>
-    <h1>開発記録</h1>
-    <p class="note">無断での保存・転載を禁止します。</p>
-</header>
-
-<main>
-
-    <!-- 管理者ログイン -->
-    <section id="login-section">
-        <h2>管理者ログイン</h2>
-        <input type="password" id="admin-pass" placeholder="パスワードを入力">
-        <button onclick="login()">ログイン</button>
-        <p class="small">※ 管理者のみ投稿できます</p>
-    </section>
-
-    <!-- 投稿フォーム（管理者のみ表示） -->
-    <section id="post-section" class="hidden">
-        <h2>新規投稿</h2>
-        <input type="text" id="post-title" placeholder="タイトル">
-        <textarea id="post-text" placeholder="本文"></textarea>
-        <button onclick="addPost()">投稿する</button>
-    </section>
-
-    <!-- 写真追加フォーム -->
-    <section id="photo-section" class="hidden">
-        <h2>写真を追加</h2>
-        <select id="post-select"></select>
-        <input type="file" id="photo-file" accept="image/*">
-        <input type="date" id="photo-date">
-        <input type="text" id="photo-desc" placeholder="説明（任意）">
-        <button onclick="addPhoto()">写真を追加</button>
-    </section>
-
-    <hr>
-
-    <!-- 投稿一覧 -->
-    <section>
-        <h2>投稿一覧</h2>
-        <div id="post-list"></div>
-    </section>
-
-</main>
-
-<script src="script.js"></script>
-</body>
-</html>
-
-body {
-    font-family: "Noto Sans JP", sans-serif;
-    background: #ffffff;
-    color: #000;
-    margin: 0;
-    padding: 20px;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 32px;
-}
-
-.note {
-    font-size: 12px;
-    color: #444;
-}
-
-section {
-    margin-top: 30px;
-}
-
-input, textarea, select, button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border: 1px solid #000;
-    background: #fff;
-}
-
-button {
-    cursor: pointer;
-    background: #e0e0e0;
-}
-
-.hidden {
-    display: none;
-}
-
-.post-box {
-    border: 1px solid #000;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.photo {
-    margin-top: 10px;
-}
-
-.photo img {
-    width: 100%;
-    max-width: 400px;
-    display: block;
-}
-
-.small {
-    font-size: 12px;
-}
-
-let posts = JSON.parse(localStorage.getItem("posts") || "[]");
-
-// 管理者パスワード（必要なら変更）
-const ADMIN_PASS = "takitsu2026";
-
-// ログイン処理
-function login() {
-    const pass = document.getElementById("admin-pass").value;
-    if (pass === ADMIN_PASS) {
-        document.getElementById("post-section").classList.remove("hidden");
-        document.getElementById("photo-section").classList.remove("hidden");
-        alert("ログイン成功");
-    } else {
-        alert("パスワードが違います");
+  <meta charset="UTF-8">
+  <title>滝津県 公式サイト | Takitsu Prefecture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --main-color: #1e88e5;
+      --bg-color: #f5f7fb;
+      --text-color: #333;
+      --max-width: 1100px;
     }
-}
 
-// 投稿追加
-function addPost() {
-    const title = document.getElementById("post-title").value;
-    const text = document.getElementById("post-text").value;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    const newPost = {
-        id: Date.now(),
-        title,
-        text,
-        date: new Date().toLocaleDateString(),
-        photos: []
-    };
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.7;
+    }
 
-    posts.push(newPost);
-    save();
-    render();
-    updateSelect();
-}
+    header {
+      background: #ffffffcc;
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid #e0e4ef;
+    }
 
-// 写真追加
-function addPhoto() {
-    const id = Number(document.getElementById("post-select").value);
-    const file = document.getElementById("photo-file").files[0];
-    const date = document.getElementById("photo-date").value;
-    const desc = document.getElementById("photo-desc").value;
+    .nav-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0.6rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-    if (!file) return alert("写真を選んでください");
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const post = posts.find(p => p.id === id);
-        post.photos.push({
-            src: e.target.result,
-            date,
-            desc
-        });
-        save();
-        render();
-    };
-    reader.readAsDataURL(file);
-}
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1rem;
+    }
 
-// 保存
-function save() {
-    localStorage.setItem("posts", JSON.stringify(posts));
-}
+    nav a {
+      text-decoration: none;
+      color: var(--text-color);
+      padding: 0.3rem 0.6rem;
+      border-radius: 999px;
+    }
 
-// 投稿一覧表示
-function render() {
-    const list = document.getElementById("post-list");
-    list.innerHTML = "";
+    nav a:hover {
+      background: #e3f2fd;
+    }
 
-    posts.slice().reverse().forEach(post => {
-        const box = document.createElement("div");
-        box.className = "post-box";
+    main {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 1.5rem 1.2rem 3rem;
+    }
 
-        box.innerHTML = `
-            <h3>${post.title}</h3>
-            <p>${post.date}</p>
-            <p>${post.text}</p>
-        `;
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #e3f2fd, #fce4ec);
+      padding: 2.5rem 1.5rem;
+      border-radius: 18px;
+      margin-bottom: 2rem;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+    }
 
-        post.photos.forEach(photo => {
-            const p = document.createElement("div");
-            p.className = "photo";
-            p.innerHTML = `
-                <img src="${photo.src}">
-                <p>撮影日：${photo.date}</p>
-                <p>${photo.desc}</p>
-            `;
-            box.appendChild(p);
-        });
+    .hero-title {
+      font-size: 2rem;
+      margin-bottom: 0.8rem;
+      font-weight: 700;
+    }
 
-        list.appendChild(box);
-    });
-}
+    .hero-sub {
+      font-size: 1rem;
+      margin-bottom: 1.2rem;
+    }
 
-// 投稿選択リスト更新
-function updateSelect() {
-    const select = document.getElementById("post-select");
-    select.innerHTML = "";
-    posts.forEach(post => {
-        const op = document.createElement("option");
-        op.value = post.id;
-        op.textContent = post.title;
-        select.appendChild(op);
-    });
-}
+    .tag {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #bbdefb;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+    }
 
-render();
-updateSelect();
+    .btn-main {
+      display: inline-block;
+      background: var(--main-color);
+      color: #fff;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 6px 14px rgba(30,136,229,0.4);
+    }
 
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>滝津県について</title>
-    <link rel="stylesheet" href="style.css">
+    .btn-main:hover {
+      opacity: 0.9;
+    }
+
+    /* Section */
+    section { margin: 2.5rem 0; }
+
+    .section-title {
+      font-size: 1.4rem;
+      border-left: 4px solid var(--main-color);
+      padding-left: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .section-sub {
+      font-size: 0.9rem;
+      color: #607d8b;
+      margin-bottom: 1.2rem;
+    }
+
+    .jobs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .job-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid #e0e4ef;
+      font-size: 0.9rem;
+    }
+
+    .job-name {
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    /* News */
+    .news-list { list-style: none; }
+    .news-item {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #e0e4ef;
+      font-size: 0.9rem;
+    }
+    .news-date {
+      font-size: 0.75rem;
+      color: #78909c;
+      margin-right: 0.4rem;
+    }
+
+    /* Links */
+    .link-list { list-style: none; font-size: 0.9rem; }
+    .link-list li { margin-bottom: 0.4rem; }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: #78909c;
+      border-top: 1px solid #e0e4ef;
+    }
+  </style>
 </head>
 <body>
 
 <header>
-    <h1>滝津県について</h1>
+  <div class="nav-inner">
+    <div class="logo">滝津県 公式サイト</div>
+    <nav>
+      <ul>
+        <li><a href="#about">滝津県とは</a></li>
+        <li><a href="#jobs">役割</a></li>
+        <li><a href="#news">お知らせ</a></li>
+        <li><a href="#links">広報</a></li>
+     　 <li><a href="#links">お問合せ</a></li>
+　　　　<li><a href="#links">運営紹介</a></li>
+
+
+</ul>
+    </nav>
+  </div>
 </header>
 
 <main>
 
-<section class="intro-box">
-    <h2>概要</h2>
-    <p>
-        滝津県は、豊かな自然と落ち着いた街並みが調和した地域です。<br>
-        県内には滝や川が多く、四季を通して美しい景観を楽しむことができます。<br>
-        住みやすさと発展を両立させることを目指し、現在もさまざまな開発が進められています。
-    </p>
-</section>
+  <!-- Hero -->
+  <section class="hero">
+    <h1 class="hero-title">ただのRPゲームではない。あなたはどのようにRPをしますか？<br>自然と温泉のふるさと　滝津県へようこそ</h1>
+    <p class="hero-sub">Robloxで楽しめる、日本風ハードロールプレイ県「滝津県」。</p>
+    <span class="tag">ロブロックス</span><br>
+    <a class="btn-main" href="ROBLOX_URL" target="_blank">Robloxでプレイ</a>
+　　<a class="btn-main" href="ROBLOX_URL" target="_blank">DISCORDの参加</a>
 
-<section class="intro-box">
-    <h2>人口・面積</h2>
-    <p>
-        ・人口：およそ ○○万人<br>
-        ・面積：○○ km²<br>
-        ・県庁所在地：滝津市
-    </p>
-</section>
+  </section>
 
-<section class="intro-box">
-    <h2>主な特徴</h2>
-    <ul>
-        <li>自然豊かな環境</li>
-        <li>落ち着いた生活圏</li>
-        <li>観光資源としての滝・渓谷</li>
-        <li>開発が進む新しい街づくり</li>
+  <!-- About -->
+  <section id="about">
+    <h2 class="section-title">滝津県とは</h2>
+    <p class="section-sub">
+      滝津県は、ロブロックスのRPゲームです。全て試験性があり、合格しないと職員になることは出来ません。
+滝津県では、滝塚市　原野谷市　月石市　があります。
+    </p>
+  </section>
+
+  <!-- Jobs -->
+  <section id="jobs">
+    <h2 class="section-title">役割</h2>
+    <p class="section-sub">滝津県での公共機関。</p>
+
+    <div class="jobs-grid">
+      <div class="job-card"><div class="job-name">県警察</div>事件・事故はすぐに110に電話！皆さんが安心して過ごせるようにパトロールを行います。</div>
+      <div class="job-card"><div class="job-name">広域消防組合消防本部</div>火災・災害の時にすぎに出動します。</div>
+      <div class="job-card"><div class="job-name">救急</div>事故での怪我などがあった1秒でも早く到着を心がけます。</div>
+      <div class="job-card"><div class="job-name">県交通</div>お客様を安全安心で最後の終点までお送りします。</div>
+　　  <div class="job-card"><div class="job-name">ヘリポータルサービス</div>ヘリポータルサービスは、観光、ニュース撮影などで、ヘリを動かします。</div>
+      <div class="job-card"><div class="job-name">県庁職員</div>市民の皆様が安心して過ごせるようにサポートします。</div>
+      <div class="job-card"><div class="job-name">教育委員会</div>小中学校・支援学校の方を安心して、学校生活を出来るようにして行きます。</div>
+　　　<div class="job-card"><div class="job-name">高級寿司</div>新鮮なお寿司をご提供致します！</div>　　
+
+    </div>
+  </section>
+
+  <!-- Jobs -->
+  <section id="jobs">
+    <h2 class="section-title">役割</h2>
+    <p class="section-sub">市民で許可されている企業</p>
+　　<div class="job-card"><div class="job-name">未来都市圏</div>未来の都市の圏を作る会社</div>
+   
+ <!-- Jobs -->
+  <section id="jobs">
+    <h2 class="section-title">同盟先</h2>
+    <p class="section-sub">滝津県では、同盟を組んでいます。</p>
+
+    <div class="jobs-grid">
+      <div class="job-card"><div class="job-name">「携」日光府様</div>2025年12月28日に同盟を組みました。</div>
+     <div class="job-card"><div class="job-name">「解」石原県</div>2026年1月2日に同盟を組みましたが、石原県の解散により、同盟を解除となりました。</div>
+　　<div class="job-card"><div class="job-name">「携」桃山市様</div>2026年2月7日に同盟を組みました。</div>
+　　<div class="job-card"><div class="job-name">「携」未来都市圏様</div>2026年3月20日に同盟を組みました。</div>
+
+ </div>
+  </section>
+
+  <!-- News -->
+  <section id="news">
+    <h2 class="section-title">お知らせ</h2>
+    <p class="section-sub">最新情報をお届けします。</p>
+
+    <ul class="news-list">
+    <li class="news-item"><span class="news-date">2026-03-24</span>みど市の新公式サイト誕生</li>  
+</ul>
+  </section>
+
+  <!-- Links -->
+  <section id="links">
+    <h2 class="section-title">広報</h2>
+    <p class="section-sub">みど市コミュニティのリンクはこちら。</p>
+
+    <ul class="link-list">
+      <li>・Roblox コミュニティ：<a href="ROBLOX_URL" target="_blank">こちら</a></li>
+      <li>・みど市 Discord：<a href="DISCORD_URL" target="_blank">こちら</a></li>
+      <li>・みど市 公式YouTube：<a href="YOUTUBE_URL" target="_blank">こちら</a></li>
     </ul>
-</section>
-
-<section class="intro-box">
-    <h2>アクセス</h2>
-    <p>
-        ・主要駅：滝津駅<br>
-        ・空港：滝津空港（国内線）<br>
-        ・高速道路：滝津IC ほか
-    </p>
-</section>
+  </section>
 
 </main>
 
+<footer>
+  © みど市 | Midori City
+</footer>
+
 </body>
 </html>
+.job-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.job-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+<style>
+  /* ここに追加してOK */
+  .job-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+
+  .job-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
